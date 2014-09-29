@@ -9,9 +9,9 @@ int verticies;
 int ** graph; 
 
 // function to return 1 or 0 depending whether or not they are connected
-//  
+  
 int is_connected (int start, int interm, int stop) { 
-  if (interm == 0) { 
+  /*if (interm == 0) { 
     if (start == stop) return 1;
     else if (graph[start][stop]) { 
       return 1;       
@@ -21,7 +21,12 @@ int is_connected (int start, int interm, int stop) {
   } else {
     return (is_connected (start, interm - 1, stop) || 
     ((is_connected (start, interm - 1, interm)) && (is_connected (interm, interm - 1, stop))));
-  }
+  }*/
+  if (interm < 0) return graph[start][stop];  
+  else {
+    return (is_connected (start, interm - 1, stop) || 
+    ((is_connected (start, interm - 1, interm)) && (is_connected (interm, interm - 1, stop))));
+  } 
 }
  
 int ** parse_graph (char * file) { 
@@ -73,13 +78,20 @@ void transitive_closure () {
   return;
 }
 
+void print_graph (){ 
+  int i, j; 
+  for (i = 0; i < verticies; i++) {
+    for (j = 0; j < verticies; j++) {
+      printf("%d", graph[i][j]);  
+    }
+    printf("\n");
+  }
+}
+
 int main (int argc, char ** argv) { 
   char * file = argv[1]; 
   graph = parse_graph(file);
+  print_graph();
   transitive_closure();
-  int i, j; 
-  for (i = 0; i < verticies; i++)
-    for (j = 0; j < verticies; j++) 
-      printf("%d\n", graph[i][j]);  
+  print_graph();
 } 
-
