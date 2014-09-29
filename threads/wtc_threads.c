@@ -8,27 +8,6 @@ int threads;
 int verticies; 
 int ** graph; 
 
-// function to return 1 or 0 depending whether or not they are connected
-  
-int is_connected (int start, int interm, int stop) { 
-  /*if (interm == 0) { 
-    if (start == stop) return 1;
-    else if (graph[start][stop]) { 
-      return 1;       
-    } else {
-      return 0;  
-    }  
-  } else {
-    return (is_connected (start, interm - 1, stop) || 
-    ((is_connected (start, interm - 1, interm)) && (is_connected (interm, interm - 1, stop))));
-  }*/
-  if (interm < 0) return graph[start][stop];  
-  else {
-    return (is_connected (start, interm - 1, stop) || 
-    ((is_connected (start, interm - 1, interm)) && (is_connected (interm, interm - 1, stop))));
-  } 
-}
- 
 int ** parse_graph (char * file) { 
   int ** final;
   FILE * input  = fopen (file,"r"); 
@@ -71,10 +50,13 @@ int ** parse_graph (char * file) {
 
 void transitive_closure () { 
   int k, j, i;
-  for (k = 0; k < verticies; k++) 
-    for (i = 0; i < verticies; i++) 
-      for (j = 0; j < verticies; j++)
-        graph[i][j] = is_connected(i, k, j); 
+  for (k = 0; k < verticies; k++) {
+    for (i = 0; i < verticies; i++) {
+      for (j = 0; j < verticies; j++) { 
+            graph[i][j] = graph[i][j] || (graph[i][k] && graph[k][j]);   
+      } 
+    } 
+  }
   return;
 }
 
