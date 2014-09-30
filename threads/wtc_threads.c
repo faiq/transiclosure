@@ -48,19 +48,50 @@ int ** parse_graph (char * file) {
   return final;
 }
 
+void * thread_ops (void * args) { 
+  work_args * arg = (work_args *) args;  
+  int row = arg->row; 
+  int work_size = arg->work_size; 
+  int k = arg->k; 
+  for (i = row; i < work_size; i++) {  
+    for (j = 0; j < verticies; j++) { 
+      graph[i][j] = graph[i][j] || (graph[i][k] && graph[k][j]);    
+    } 
+  }
+}
+
 void transitive_closure () { 
   int k, j, i;
+  pthread_t workers[threads]; 
+  int max_work_size; 
+  if (verticies % threads != 0) max_work_size = verticies/threads + 1; 
+  else max_work_size = verticies/threads;  
   for (k = 0; k < verticies; k++) {
-    for (i = 0; i < verticies; i++) {
-      for (j = 0; j < verticies; j++) { 
-            graph[i][j] = graph[i][j] || (graph[i][k] && graph[k][j]);   
-      } 
+    int remaining_rows = verticies;     
+    int row = 0; //what row the thread is starting on
+    while (remaining_rows > 0) {
+      work_args * args = malloc (sizeof (work_args)); 
+      int work_size;
+      if (remaining_rows - max_work_size < 0) {
+        int temp = remaining_rows - max_work_size;    
+        work_size = max_work_size + temp;
+      } else {
+        work_size = remaining_rows - max_work_size;
+      }     
+      row = row + work_size;
+      args->row = row; 
+      args->work_size = work_size; 
+      args->k = k;
+      int = pthread_create (&workers[i], NULL , thread_ops, (void *) args);
+      remaining_rows =- max_work_size; 
     } 
+    for(i=0;i<threads;i++)
+      pthread_join(consumerst[i],NULL); 
   }
   return;
 }
 
-void print_graph (){ 
+void print_graph () { 
   int i, j; 
   for (i = 0; i < verticies; i++) {
     for (j = 0; j < verticies; j++) {
