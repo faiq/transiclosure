@@ -49,7 +49,7 @@ int ** parse_graph (char * file) {
 }
 
 void * thread_ops (void * args) { 
-  printf("in thread ops");
+  printf("in thread ops\n");
   work_args * arg = (work_args *) args;  
   int row = arg->row; 
   int work_size = arg->work_size; 
@@ -64,8 +64,10 @@ void * thread_ops (void * args) {
 
 void transitive_closure () { 
   int k, j, i;
+  printf("threads is equal to %d\n", threads);
   pthread_t workers[threads]; 
   int max_work_size; 
+  printf("size of workers is  %d\n", sizeof (workers)/sizeof (pthread_t));
   if (verticies % threads != 0) max_work_size = verticies/threads + 1; 
   else max_work_size = verticies/threads;  
   for (k = 0; k < verticies; k++) {
@@ -73,7 +75,7 @@ void transitive_closure () {
     int row = 0; //what row the thread is starting on
     i = 0;
     while (remaining_rows > 0) {
-      work_args * arg = malloc (sizeof (work_args)); 
+      work_args * arg = malloc(sizeof (work_args)); 
       int work_size;
       if (remaining_rows - max_work_size < 0) {
         int temp = remaining_rows - max_work_size;    
@@ -84,9 +86,11 @@ void transitive_closure () {
       arg->row = row; 
       arg->work_size = work_size; 
       arg->k = k;
-      printf("row %d, work %d, k %d, i %d\n",row, work_size, k, i);  
-      int thread = pthread_create(&workers[i], NULL , thread_ops, (void *) arg);
-      remaining_rows =- max_work_size; 
+      printf("row %d, work %d, k %d, i %d\n",arg->row, arg->work_size, arg->k, i);  
+      if (pthread_create(&workers[i], NULL , thread_ops, (void *) arg) == -1) 
+        fprintf(stderr, "error in creation\n"); 
+      else printf("craeted thread \n"); 
+      remaining_rows -= max_work_size; 
       row = row + work_size;
       i++;
     } 
