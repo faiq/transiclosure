@@ -27,7 +27,6 @@ int ** parse_graph (char * file) {
           final[i] = malloc(sizeof (int) * verticies);
           memset(final[i], 0, sizeof (int) * verticies);
         } 
-        verticies--;
       } else {  
         char * pch = strtok (buffer," "); 
         int row = 0; 
