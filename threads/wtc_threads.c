@@ -8,7 +8,6 @@ int threads;
 int verticies; 
 int ** graph; 
 pthread_mutex_t lock;
-int ** prev_graph;
 
 int ** parse_graph (char * file) { 
   int ** final;
@@ -75,7 +74,6 @@ void transitive_closure () {
   printf("this is verticies %d\n", verticies);
   if (verticies % threads != 0) max_work_size = verticies/threads + 1; 
   else max_work_size = verticies/threads;  
-  prev_graph = NULL; 
   for (k = 0; k < verticies; k++) {
     int remaining_rows = verticies;     
     int row = 0; //what row the thread is starting on
@@ -101,22 +99,6 @@ void transitive_closure () {
     } 
     for(i=0;i<threads;i++)
       pthread_join(workers[i],NULL); 
-   
-    if (!prev_graph) { 
-      printf("\n");
-      printf("prev is null k is %d\n", k);
-      prev_graph = (int **) malloc (sizeof (int *) * verticies);
-      int x; 
-      for (x = 0; x < verticies; x++) {
-        prev_graph[i] = malloc(sizeof (int) * verticies);
-      } 
-    } else { 
-      printf("\n");
-      printf("prev graph is not null k is %d\n",k);
-      print_graph(prev_graph);
-      printf("\n");
-    } 
-    memcpy (prev_graph, graph, ((sizeof (int *) * verticies) + (sizeof (int) * verticies)));
   }
   return;
 }
