@@ -8,6 +8,7 @@ int threads;
 int verticies; 
 int ** graph; 
 pthread_mutex_t lock;
+int ** prev_graph;
 
 int ** parse_graph (char * file) { 
   int ** final;
@@ -51,16 +52,23 @@ int ** parse_graph (char * file) {
 
 void * thread_ops (void * args) { 
   pthread_mutex_lock(&lock);
-  work_args * arg = (work_args *) args;
-  int row = arg->row;
-  int work_size = arg->work_size;
-  int k = arg->k;
-  int i, j;
-  for (i = row; i < work_size; i++) {  
-    for (j = 0; j < verticies; j++) { 
-      graph[i][j] = graph[i][j] || (graph[i][k] && graph[k][j]);    
-    }
+  
+  work_args * arg = (work_args *) args;  
+  int row = arg->row; 
+  int work_size = arg->work_size; 
+  int k = arg->k; 
+  int i, j; 
+  for (i = row; i < row+work_size; i++) {  
+    for (j = 0; j < verticies; j++) {
+      if (!prev_graph) { 
+        graph[i][j] = graph[i][j];
+      }
+      else { 
+        graph[i][j] = (prev_graph[i][j] || (prev_graph[i][k] && prev_graph[k][j]));    
+      }
+    } 
   }
+
   pthread_mutex_unlock(&lock);
   return NULL;
 }
@@ -71,6 +79,7 @@ void transitive_closure () {
   int max_work_size; 
   if (verticies % threads != 0) max_work_size = verticies/threads + 1; 
   else max_work_size = verticies/threads;  
+  prev_graph = NULL; 
   for (k = 0; k < verticies; k++) {
     int remaining_rows = verticies;     
     int row = 0; //what row the thread is starting on
@@ -81,9 +90,9 @@ void transitive_closure () {
       if (remaining_rows - max_work_size < 0) {
         int temp = remaining_rows - max_work_size;    
         work_size = max_work_size + temp;
-      } 
-      else work_size = max_work_size;
-           
+      } else {
+        work_size = max_work_size;
+      }     
       arg->row = row; 
       arg->work_size = work_size; 
       arg->k = k;
@@ -96,11 +105,27 @@ void transitive_closure () {
     } 
     for(i=0;i<threads;i++)
       pthread_join(workers[i],NULL); 
+   
+    if (!prev_graph) { 
+      printf("\n");
+      printf("prev is null k is %d\n", k);
+      prev_graph = (int **) malloc (sizeof (int *) * verticies);
+      int x; 
+      for (x = 0; x < verticies; x++) {
+        prev_graph[i] = malloc(sizeof (int) * verticies);
+      } 
+    } else { 
+      printf("\n");
+      printf("prev graph is not null k is %d\n",k);
+      print_graph(prev_graph);
+      printf("\n");
+    } 
+    memcpy (prev_graph, graph, ((sizeof (int *) * verticies) + (sizeof (int) * verticies)));
   }
   return;
 }
 
-void print_graph () { 
+void print_graph (int ** graph) { 
   int i, j; 
   for (i = 0; i < verticies; i++) {
     for (j = 0; j < verticies; j++) {
@@ -113,7 +138,12 @@ void print_graph () {
 int main (int argc, char ** argv) { 
   char * file = argv[1]; 
   graph = parse_graph(file);
-  print_graph();
+  printf("before\n");
+  print_graph(graph);
+  printf("\n");
   transitive_closure();
-  print_graph();
+  printf("after\n");
+  print_graph(graph);
+  printf("\n");
 } 
+
