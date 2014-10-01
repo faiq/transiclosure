@@ -60,14 +60,7 @@ void * thread_ops (void * args) {
   int i, j; 
   for (i = row; i < row+work_size; i++) {  
     for (j = 0; j < verticies; j++) {
-      
-      if (!prev_graph) { 
-        graph[i][j] = graph[i][j];
-      }
-      else { 
-        graph[i][j] = prev_graph[i][j] || (prev_graph[i][k] && prev_graph[k][j]);    
-      }
-
+        graph[i][j] = graph[i][j] || (graph[i][k] && graph[k][j]);    
     } 
   }
 
