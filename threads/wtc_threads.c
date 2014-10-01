@@ -27,6 +27,7 @@ int ** parse_graph (char * file) {
           final[i] = malloc(sizeof (int) * verticies);
           memset(final[i], 0, sizeof (int) * verticies);
         } 
+        verticies--;
       } else {  
         char * pch = strtok (buffer," "); 
         int row = 0; 
@@ -60,12 +61,14 @@ void * thread_ops (void * args) {
   int i, j; 
   for (i = row; i < row+work_size; i++) {  
     for (j = 0; j < verticies; j++) {
+      
       if (!prev_graph) { 
         graph[i][j] = graph[i][j];
       }
       else { 
-        graph[i][j] = (prev_graph[i][j] || (prev_graph[i][k] && prev_graph[k][j]));    
+        graph[i][j] = prev_graph[i][j] || (prev_graph[i][k] && prev_graph[k][j]);    
       }
+
     } 
   }
 
@@ -77,6 +80,7 @@ void transitive_closure () {
   int k,i;
   pthread_t workers[threads]; 
   int max_work_size; 
+  printf("this is verticies %d\n", verticies);
   if (verticies % threads != 0) max_work_size = verticies/threads + 1; 
   else max_work_size = verticies/threads;  
   prev_graph = NULL; 
