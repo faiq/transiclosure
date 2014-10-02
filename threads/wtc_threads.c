@@ -46,6 +46,7 @@ int ** parse_graph (char * file) {
       for (j = 0; j < verticies; j++) 
         if (i == j) final[i][j] = 1;
   }
+  fclose (input);
   return final;
 }
 
@@ -108,7 +109,12 @@ void print_graph (int ** graph) {
     printf("\n");
   }
 }
-
+void clean_up(){ 
+  int i; 
+  for (i = 0; i < verticies; i++) 
+    free(graph[i]);
+  free(graph);
+}  
 int main (int argc, char ** argv) { 
   char * file = argv[1]; 
   graph = parse_graph(file);
@@ -120,5 +126,6 @@ int main (int argc, char ** argv) {
   print_graph(graph);
   printf("\n");
   pthread_mutex_destroy(&lock);
+  clean_up(); 
 } 
 
