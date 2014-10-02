@@ -7,7 +7,6 @@
 int threads; 
 int verticies; 
 int ** graph; 
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 int ** parse_graph (char * file) { 
   int ** final;
@@ -125,7 +124,6 @@ int main (int argc, char ** argv) {
   printf("after\n");
   print_graph(graph);
   printf("\n");
-  pthread_mutex_destroy(&lock);
   clean_up(); 
 } 
 
