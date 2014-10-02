@@ -6,33 +6,48 @@
 #include <strings.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 
 int main(int argc, char** argv) {
     FILE* fp = fopen(argv[1], "r");
-    if (fp == NULL)
+    if (fp == NULL) {
         perror("Could not open file");
+        exit(EXIT_FAILURE);
+    }
 
     char* line = NULL;
     size_t len = 0;
     ssize_t read;
     int p, n;
-    size_t graph_len = n*n;
 
     read = getline(&line, &len, fp);
     p = atoi(line);
     read = getline(&line, &len, fp);
     n = atoi(line);
 
+    size_t graph_len = n*n;
+
     key_t shmkey = ftok("/dev/null", 5);
     int shmid = shmget(shmkey, graph_len * sizeof(int), 0644 | IPC_CREAT);
+    if (shmid < 0) {
+        perror("Could not create shared memory");
+        exit(EXIT_FAILURE);
+    }
+
     int* g = (int*)shmat(shmid, NULL, 0);
+    if ((long int)g == -1) {
+        perror("Could not attach shared memory");
+        exit(EXIT_FAILURE);
+    }
     bzero(g, graph_len*sizeof(int));
 
     while ((read = getline(&line, &len, fp)) != -1) {
-        int i = line[0];
-        int j = line[2];
+        int i = line[0] - '0';
+        int j = line[2] - '0';
         g[j*n + i] = 1;
     }
+
+    free(line);
 
     for (int k = 0; k < n; k++) {
         int work_size = n/p;
