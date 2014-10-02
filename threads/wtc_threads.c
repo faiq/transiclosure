@@ -68,7 +68,7 @@ void transitive_closure () {
   int k,i;
   pthread_t workers[threads]; 
   int max_work_size; 
-  
+
   if (verticies % threads != 0) max_work_size = verticies/threads + 1; 
   else max_work_size = verticies/threads;  
 
