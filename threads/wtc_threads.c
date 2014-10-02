@@ -7,7 +7,7 @@
 int threads; 
 int verticies; 
 int ** graph; 
-pthread_mutex_t lock;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 int ** parse_graph (char * file) { 
   int ** final;
@@ -46,12 +46,11 @@ int ** parse_graph (char * file) {
       for (j = 0; j < verticies; j++) 
         if (i == j) final[i][j] = 1;
   }
+  fclose (input);
   return final;
 }
 
 void * thread_ops (void * args) { 
-  pthread_mutex_lock(&lock);
-  
   work_args * arg = (work_args *) args;  
   int row = arg->row; 
   int work_size = arg->work_size; 
@@ -62,8 +61,6 @@ void * thread_ops (void * args) {
         graph[i][j] = graph[i][j] || (graph[i][k] && graph[k][j]);    
     } 
   }
-
-  pthread_mutex_unlock(&lock);
   return NULL;
 }
 
@@ -71,9 +68,10 @@ void transitive_closure () {
   int k,i;
   pthread_t workers[threads]; 
   int max_work_size; 
-  printf("this is verticies %d\n", verticies);
+  
   if (verticies % threads != 0) max_work_size = verticies/threads + 1; 
   else max_work_size = verticies/threads;  
+
   for (k = 0; k < verticies; k++) {
     int remaining_rows = verticies;     
     int row = 0; //what row the thread is starting on
@@ -90,10 +88,9 @@ void transitive_closure () {
       arg->row = row; 
       arg->work_size = work_size; 
       arg->k = k;
-      printf("row %d, work %d, k %d, i %d\n",arg->row, arg->work_size, arg->k, i);  
       if (pthread_create(&workers[i], NULL , thread_ops, (void *) arg) == -1) 
         fprintf(stderr, "error in creation\n"); 
-      remaining_rows -= max_work_size; 
+      remaining_rows -= work_size; 
       row = row + work_size;
       i++;
     } 
@@ -112,7 +109,12 @@ void print_graph (int ** graph) {
     printf("\n");
   }
 }
-
+void clean_up(){ 
+  int i; 
+  for (i = 0; i < verticies; i++) 
+    free(graph[i]);
+  free(graph);
+}  
 int main (int argc, char ** argv) { 
   char * file = argv[1]; 
   graph = parse_graph(file);
@@ -123,5 +125,7 @@ int main (int argc, char ** argv) {
   printf("after\n");
   print_graph(graph);
   printf("\n");
+  pthread_mutex_destroy(&lock);
+  clean_up(); 
 } 
 
