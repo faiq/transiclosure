@@ -7,13 +7,18 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
-inline volatile unsigned long long RDTSC() {
-   register unsigned long long TSC asm("eax");
-   asm volatile (".byte 15, 49" : : : "eax", "edx");
-   return TSC;
-} 
-
+inline uint64_t rdtsc() {
+  unsigned int lo, hi;
+  __asm__  __volatile__(
+     "cpuid \n"
+     "rdtsc" 
+   : "=a"(lo), "=d"(hi) 
+   :                    
+   : "%ebx", "%ecx");     
+  return ((((uint64_t)hi) << 32) | lo);
+}
 
 //prints out the graph in the required format
 void print_graph(int* g, int n) {
@@ -49,11 +54,6 @@ void transitive_closure(int* g, int k, int n, int work_start, int work_end) {
 }
 
 int main(int argc, char** argv) {
-    //warm up RDTSC
-    RDTSC();
-    RDTSC();
-    RDTSC();
-
     //Get graph.in file
     FILE* fp = fopen(argv[1], "r");
     if (fp == NULL) {
@@ -110,6 +110,7 @@ int main(int argc, char** argv) {
     fclose(fp);
     free(line);
 
+    uint64_t start = rdtsc();
     //actual transitive closure calculations
     int k, process;
     for (k = 0; k < n; k++) {
@@ -146,9 +147,17 @@ int main(int argc, char** argv) {
             wait(0);
         }
     }
+    uint64_t end = rdtsc();
 
-    print_matrix(g, n);
-    printf("%llu\n", RDTSC());
+    unsigned int lo1 = start & (((uint64_t)2 << 32) - 1);
+    unsigned int lo3 = end & (((int64_t)2 << 32) - 1);
+    int cycles1 = lo3 - lo1;
+    float tz = ((float) (cycles1));
+    float fact = 3092766000  * .000001;
+    tz = tz / fact;
+
+    print_graph(g, n);
+    printf("%f\n", tz);
 
     return 0;
 }
