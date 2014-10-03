@@ -151,7 +151,7 @@ int main (int argc, char ** argv) {
   unsigned int lo3 = stop1 & (((int64_t)2 << 32) - 1);
   int cycles1 = lo3 - lo1;
   float tz = ((float) (cycles1));
-  float fact = 3591338000.0  * .000001;
+  float fact = 3092766000  * .000001;
   tz = tz / fact;
   printf("the time in milliseconds to do transitive closure with %d threads %f", threads, tz); 
   printf("\n");
