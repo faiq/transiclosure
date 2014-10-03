@@ -153,7 +153,7 @@ int main (int argc, char ** argv) {
   float tz = ((float) (cycles1));
   float fact = 3591338000.0  * .000001;
   tz = tz / fact;
-  printf("the time to do transitive closure with %d threads %f", threads, tz); 
+  printf("the time in milliseconds to do transitive closure with %d threads %f", threads, tz); 
   printf("\n");
   clean_up(); 
 } 
