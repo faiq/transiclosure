@@ -2,11 +2,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
-#include "wtc_threads.h" 
-
+#include <errno.h>
+#include <inttypes.h>
+#include <unistd.h>
 int threads; 
 int verticies; 
 int ** graph; 
+
+inline uint64_t rdtsc() {
+  unsigned int lo, hi;
+  __asm__  __volatile__(
+     "cpuid \n"
+     "rdtsc" 
+   : "=a"(lo), "=d"(hi) 
+   :                    
+   : "%ebx", "%ecx");     
+  return ((((uint64_t)hi) << 32) | lo);
+}
+
+typedef struct work_args{
+  int k; 
+  int  row; 
+  int  work_size; 
+} work_args;
 
 int ** parse_graph (char * file) { 
   int ** final;
@@ -116,13 +134,26 @@ void clean_up(){
 }  
 int main (int argc, char ** argv) { 
   char * file = argv[1]; 
+  if (strcmp (file, "graph.in") != 0) { 
+    fprintf(stderr, "you passed in an incorrect file, please pass graph.in");  
+    exit(EBADF);  
+  }
   graph = parse_graph(file);
   printf("before\n");
   print_graph(graph);
   printf("\n");
+  uint64_t start1 = rdtsc(); 
   transitive_closure();
+  uint64_t stop1 = rdtsc();
   printf("after\n");
   print_graph(graph);
+  unsigned int lo1 = start1 & (((uint64_t)2 << 32) - 1);
+  unsigned int lo3 = stop1 & (((int64_t)2 << 32) - 1);
+  int cycles1 = lo3 - lo1;
+  float tz = ((float) (cycles1));
+  float fact = 3591338000.0  * .000001;
+  tz = tz / fact;
+  printf("the time to do transitive closure with %d threads %f", threads, tz); 
   printf("\n");
   clean_up(); 
 } 
