@@ -8,20 +8,27 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 
+inline volatile unsigned long long RDTSC() {
+   register unsigned long long TSC asm("eax");
+   asm volatile (".byte 15, 49" : : : "eax", "edx");
+   return TSC;
+} 
+
+
 //prints out the graph in the required format
 void print_graph(int* g, int n) {
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            if (g[j*n + i] == 1) {
+    int i, j;
+    for (i = 0; i < n; i++)
+        for (j = 0; j < n; j++)
+            if (g[j*n + i] == 1)
                 printf("%d %d\n", i+1, j+1);
-            }
-        }
-    }
 }
 
 //print the graph like a matrix with rows and columns
-void print_matrix(int* g, int n, int len) {
-    for (int i = 0, j = 1; i < len; i++, j++) {
+void print_matrix(int* g, int n) {
+    int len = n*n;
+    int i, j;
+    for (i = 0, j = 1; i < len; i++, j++) {
         printf("%d ", g[i]);
         if (j == n) {
             j = 0;
@@ -33,14 +40,20 @@ void print_matrix(int* g, int n, int len) {
 //given a k value and an area to work in,
 //find the transitive_closure at that level
 void transitive_closure(int* g, int k, int n, int work_start, int work_end) {
-    for (int i = work_start; i < work_end; i++) {
-        for (int j = 0; j < n; j++) {
+    int i, j;
+    for (i = work_start; i < work_end; i++) {
+        for (j = 0; j < n; j++) {
             g[j*n + i] = g[j*n + i] || (g[k*n + i] && g[j*n + k]);
         }
     }
 }
 
 int main(int argc, char** argv) {
+    //warm up RDTSC
+    RDTSC();
+    RDTSC();
+    RDTSC();
+
     //Get graph.in file
     FILE* fp = fopen(argv[1], "r");
     if (fp == NULL) {
@@ -86,8 +99,10 @@ int main(int argc, char** argv) {
     //One is subtracted because everything will
     //be zero indexed and the nodes start at one
     while ((read = getline(&line, &len, fp)) != -1) {
-        int i = line[0] - '0' - 1;
-        int j = line[2] - '0' - 1;
+        int i, j;
+        sscanf(line, "%d %d\n", &i, &j);
+        i -= 1;
+        j -= 1;
         g[j*n + i] = 1;
     }
 
@@ -96,7 +111,8 @@ int main(int argc, char** argv) {
     free(line);
 
     //actual transitive closure calculations
-    for (int k = 0; k < n; k++) {
+    int k, process;
+    for (k = 0; k < n; k++) {
 
         //amount of work each process will do
         int work_size = n/p;
@@ -105,7 +121,7 @@ int main(int argc, char** argv) {
         int extra = n % p;
 
         //spawn a process for each batch of work
-        for (int process = 0; process < p; process++) {
+        for (process = 0; process < p; process++) {
 
             //where to start the work for the process we are on 
             int work_start = process * work_size;
@@ -126,12 +142,13 @@ int main(int argc, char** argv) {
         }
 
         //wait for all processes to finish
-        for (int process = 0; process < p; process++) {
+        for (process = 0; process < p; process++) {
             wait(0);
         }
     }
 
-    print_graph(g, n);
+    print_matrix(g, n);
+    printf("%llu\n", RDTSC());
 
     return 0;
 }
